@@ -5,27 +5,34 @@ import os.path
 import discordtoken
 import globals
 
-APIURL='https://discord.com/api/v9'
-TOKENS_FILE='Tokens.txt'
-LOG_FILE='Spammer.log'
-CHANNEL_ID=936860019117391925
-CONSOLE_LOGGING=True
-MESSAGE_CONTENT='Discord spammer'
+CONFIG_FILE='config.json'
 
-globals.log.LOG_FILE=LOG_FILE
-globals.log.CONSOLE_LOGGING=CONSOLE_LOGGING
+# load config
+if not os.path.isfile(CONFIG_FILE):
+    open(CONFIG_FILE, 'w')
 
-globals.log.logger('SPAMMER INIT')
+config={}
+with open(CONFIG_FILE, 'r') as _file:
+    config=JSON.loads(_file.read())
+
+print(config)
+
+globals.log.LOG_FILE=config['LOG_FILE']
+globals.log.CONSOLE_LOGGING=config['CONSOLE_LOGGING']
+
+globals.log.logger('config loaded')
 
 # load tokens
-if not os.path.isfile(TOKENS_FILE):
-    open(TOKENS_FILE, 'w')
+if not os.path.isfile(config['TOKENS_FILE']):
+    open(config['TOKENS_FILE'], 'w')
     globals.log.logger('no tokens file existed so one was created')
 
 tokens=[]
-with open(TOKENS_FILE, 'r') as _file:
+with open(config['TOKENS_FILE'], 'r') as _file:
     tokens = [token.rstrip() for token in _file]
     globals.log.logger(f'{len(tokens)} tokens were loaded')
+
+globals.log.logger('everything loaded')
 
 HEADERS={
     'Authorization': None,
@@ -35,7 +42,8 @@ HEADERS={
 def send_message(content, channel_id, discord_token):
 
     user_id=discordtoken.get_token_id(discord_token)
-    url=f'{APIURL}/channels/{channel_id}/messages'
+    api=config['API_URL']
+    url=f'{api}/channels/{channel_id}/messages'
 
     data={ 'content': content }
     data=JSON.dumps(data)
@@ -54,7 +62,7 @@ def send_message(content, channel_id, discord_token):
             time.sleep(retry_after)
             globals.log.logger(f'{retry_after}s rate limit has been lifted')
 
-            return send_message(content, channel_id, discord_token)
+            return send_message(content, config.channel_id, discord_token)
 
         globals.log.logger(f'bad status code: '+str(r.status_code))
         return None
@@ -64,7 +72,8 @@ def send_message(content, channel_id, discord_token):
 globals.log.logger('methods defined')
 
 if len(tokens)==0:
-    globals.log.logger(f'{TOKENS_FILE} is empty!', error=True)
+    tokensFile=config['TOKENS_FILE']
+    globals.log.logger(f'{tokensFile} is empty!', error=True)
 
 tokens=discordtoken.check_tokens(tokens)
 
@@ -75,7 +84,7 @@ while True:
     for token in tokens:
 
         user_id=discordtoken.get_token_id(token)
-        json=send_message(MESSAGE_CONTENT, CHANNEL_ID, token)
+        json=send_message(config['MESSAGE_CONTENT'], config['CHANNEL_ID'], token)
         if json==None:
             globals.log.logger(f'could not send message with user: '+user_id)
             continue
