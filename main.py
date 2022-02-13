@@ -15,12 +15,11 @@ config={}
 with open(CONFIG_FILE, 'r') as _file:
     config=JSON.loads(_file.read())
 
-print(config)
-
 globals.log.LOG_FILE=config['LOG_FILE']
 globals.log.CONSOLE_LOGGING=config['CONSOLE_LOGGING']
 
 globals.log.logger('config loaded')
+globals.log.logger(config)
 
 # load tokens
 if not os.path.isfile(config['TOKENS_FILE']):
